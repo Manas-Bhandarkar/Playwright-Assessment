@@ -1,32 +1,44 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { type Page, expect } from '@playwright/test';
 
-/** Login page for the demo "core banking portal" (the-internet.herokuapp.com/login). */
 export class LoginPage {
-  readonly page: Page;
-  readonly usernameInput: Locator;
-  readonly passwordInput: Locator;
-  readonly loginButton: Locator;
-  readonly flashMessage: Locator;
+  constructor(private readonly page: Page) {}
 
-  constructor(page: Page) {
-    this.page = page;
-    this.usernameInput = page.getByLabel('Username');
-    this.passwordInput = page.getByLabel('Password');
-    this.loginButton = page.getByRole('button', { name: /login/i });
-    this.flashMessage = page.locator('#flash');
+  async open() {
+    await this.page.goto('/login');
   }
 
-  async goto() {
-    await this.page.goto('https://saucedemo.com');
+  async openDashboard() {
+    await this.page.goto('/dashboard');
   }
 
-  async login(username: string, password: string) {
-    await this.usernameInput.fill(username);
-    await this.passwordInput.fill(password);
-    await this.loginButton.click();
+  async login(area: string, username: string, password: string) {
+    await this.page.getByLabel('Business area').selectOption(area);
+    await this.page.getByLabel('Username').fill(username);
+    await this.page.getByLabel('Password').fill(password);
+    await this.page.getByRole('button', { name: 'Log In' }).click();
   }
 
-  async expectError(messageSubstring: string) {
-    await expect(this.flashMessage).toContainText(messageSubstring);
+  get errorMessage() {
+    return this.page.getByRole('alert');
+  }
+
+  get welcomeHeading() {
+    return this.page.getByRole('heading', { level: 1 });
+  }
+
+  get areaBadge() {
+    return this.page.locator('.area-badge');
+  }
+
+  async expectOnDashboard() {
+    await expect(this.page).toHaveURL(/\/dashboard/);
+  }
+
+  async expectOnLogin() {
+    await expect(this.page).toHaveURL(/\/login/);
+  }
+
+  async logOut() {
+    await this.page.getByRole('button', { name: 'Log Out' }).click();
   }
 }
